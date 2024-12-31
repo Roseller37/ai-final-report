@@ -33,11 +33,12 @@ mpl.rcParams['axes.grid'] = False
 ```
 
 ## 天氣資料集
-本教學使用馬克斯普朗克生物地球化學研究所記錄的[天氣時間序列資料集。
+本教學使用![馬克斯普朗克生物地球化學研究所](https://www.bgc-jena.mpg.de/wetter/)
+記錄的[天氣時間序列資料集](https://www.bgc-jena.mpg.de/)。
 
 此資料集包含了14 個不同特徵，例如氣溫、氣壓和濕度。自2003 年起，這些數據每10 分鐘就會被收集一次。為了提高效率，您將只使用2009 至2016 年之間收集的資料。資料集的這一部分由François Chollet 為他的Deep Learning with Python一書所準備。
-https://www.bgc-jena.mpg.de/wetter/
-https://www.bgc-jena.mpg.de/
+
+
 https://www.manning.com/books/deep-learning-with-python
 
 ###
