@@ -31,6 +31,11 @@ import tensorflow as tf
 mpl.rcParams['figure.figsize'] = (8, 6)
 mpl.rcParams['axes.grid'] = False
 ```
+```
+2023-11-08 00:53:03.106712: E external/local_xla/xla/stream_executor/cuda/cuda_dnn.cc:9261] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+2023-11-08 00:53:03.106761: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:607] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
+2023-11-08 00:53:03.108388: E external/local_xla/xla/stream_executor/cuda/cuda_blas.cc:1515] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+```
 
 ## 天氣資料集
 本教學使用[馬克斯普朗克生物地球化學研究所](https://www.bgc-jena.mpg.de/wetter/)記錄的[天氣時間序列資料集](https://www.bgc-jena.mpg.de/)。
@@ -47,7 +52,7 @@ csv_path, _ = os.path.splitext(zip_path)
 Downloading data from https://storage.googleapis.com/tensorflow/tf-keras-datasets/jena_climate_2009_2016.csv.zip
 13568290/13568290 [==============================] - 0s 0us/step
 ```
-本教學僅處理每小時預測，因此先從10分鐘間隔到1小時對資料進行下採樣：
+本教學僅處理**每小時預測**，因此先從10分鐘間隔到1小時對資料進行下採樣：
 ```
 df = pd.read_csv(csv_path)
 # Slice [start:stop:step], starting from index 5 take every 6th record.
@@ -59,6 +64,31 @@ date_time = pd.to_datetime(df.pop('Date Time'), format='%d.%m.%Y %H:%M:%S')
 ```
 df.head()
 ```
+![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%B3%87%E6%96%99%E9%9B%861.png)
+以下是一些特徵隨時間的演變：
+```
+plot_cols = ['T (degC)', 'p (mbar)', 'rho (g/m**3)']
+plot_features = df[plot_cols]
+plot_features.index = date_time
+_ = plot_features.plot(subplots=True)
+
+plot_features = df[plot_cols][:480]
+plot_features.index = date_time[:480]
+_ = plot_features.plot(subplots=True)
+```
+![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%B3%87%E6%96%99%E9%9B%862.png)
+![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%B3%87%E6%96%99%E9%9B%863.png)
+### 檢查和清理
+接下來，來看看資料集的統計數據：
+```
+df.describe().transpose()
+```
+![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%B3%87%E6%96%99%E9%9B%864.png)
+
+
+
+
+
 
 
 
