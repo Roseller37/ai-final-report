@@ -84,7 +84,42 @@ _ = plot_features.plot(subplots=True)
 df.describe().transpose()
 ```
 ![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%B3%87%E6%96%99%E9%9B%864.png)
+風速 值得注意的一件事是風速 (wv (m/s)) 的 min 值和最大值 (max. wv (m/s)) 列。這個 -9999 可能是錯的。
 
+有一個單獨的風向列，因此速度應大於零 (>=0)。將其替換為零：
+```
+wv = df['wv (m/s)']
+bad_wv = wv == -9999.0
+wv[bad_wv] = 0.0
+
+max_wv = df['max. wv (m/s)']
+bad_max_wv = max_wv == -9999.0
+max_wv[bad_max_wv] = 0.0
+
+# The above inplace edits are reflected in the DataFrame.
+df['wv (m/s)'].min()
+```
+```
+0.0
+```
+### 特徵工程
+
+在潛心建立模型之前，請務必了解資料並確保傳遞格式正確的資料。
+
+風
+
+資料的最後一列 wd (deg) 以度為單位給出了風向。角度不是很好的模型輸入：360° 和 0° 應該會彼此接近，並且平滑換行。如果不吹風，方向則無關緊要。
+
+現在，風資料的分佈狀況如下：
+```
+plt.hist2d(df['wd (deg)'], df['wv (m/s)'], bins=(50, 50), vmax=400)
+plt.colorbar()
+plt.xlabel('Wind Direction [deg]')
+plt.ylabel('Wind Velocity [m/s]')
+```
+```
+Text(0, 0.5, 'Wind Velocity [m/s]')
+```
 
 
 
