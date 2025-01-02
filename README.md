@@ -135,5 +135,27 @@ Text(0, 0.5, 'Wind Velocity [m/s]')
 ```
 timestamp_s = date_time.map(pd.Timestamp.timestamp)
 ```
+與風向類似，以秒為單位的時間不是有用的模型輸入。作為天氣數據，它​​有清晰的每日和每年週期性。可以透過多種方式處理週期性。
+
+您可以透過使用正弦和餘弦變換為清晰的“一天中的時間”和“一年中的時間”信號來獲得可用的信號：
+```
+day = 24*60*60
+year = (365.2425)*day
+
+df['Day sin'] = np.sin(timestamp_s * (2 * np.pi / day))
+df['Day cos'] = np.cos(timestamp_s * (2 * np.pi / day))
+df['Year sin'] = np.sin(timestamp_s * (2 * np.pi / year))
+df['Year cos'] = np.cos(timestamp_s * (2 * np.pi / year))
+```
+```
+plt.plot(np.array(df['Day sin'])[:25])
+plt.plot(np.array(df['Day cos'])[:25])
+plt.xlabel('Time [h]')
+plt.title('Time of day signal')
+```
+![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%B3%87%E6%96%99%E9%9B%867.png)
+```
+```
+
 # 參考資料
 [時間序列預測]([https://www.cc.ntu.edu.tw/chinese/epaper/0052/20200320_5207.html](https://tensorflow.google.cn/tutorials/structured_data/time_series?hl=zh_cn))
