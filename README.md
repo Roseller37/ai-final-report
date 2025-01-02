@@ -709,8 +709,6 @@ axis = plt.gca()
 axis.set_xticks(range(len(train_df.columns)))
 _ = axis.set_xticklabels(train_df.columns, rotation=90)
 ```
-![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%92%90%E9%9B%8613.png)
-
 有時模型甚至不會將大多數權重放在輸入T (degC)上。這是隨機初始化的風險之一。
 
 ### 密集
