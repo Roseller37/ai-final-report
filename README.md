@@ -1105,7 +1105,7 @@ Wall time: 2min 38s
 
 該方法可以與本教程中討論的任何模型結合使用。
 
-這裡將它應用於LSTM 模型，請注意`[tf.initializers.zeros](https://tensorflow.google.cn/api_docs/python/tf/keras/initializers/Zeros)`的使用，以確保初始的預測改變很小，並且不會壓制殘差連接。此處的梯度沒有破壞對稱性的問題，因為`zeros`僅用於最後一層。
+這裡將它應用於LSTM 模型，請注意[tf.initializers.zeros](https://tensorflow.google.cn/api_docs/python/tf/keras/initializers/Zeros)的使用，以確保初始的預測改變很小，並且不會壓制殘差連接。此處的梯度沒有破壞對稱性的問題，因為`zeros`僅用於最後一層。
 ```
 class ResidualWrapper(tf.keras.Model):
   def __init__(self, model):
