@@ -130,6 +130,8 @@ Text(0, 0.5, 'Wind Velocity [m/s]')
 
 ###
 ![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%B3%87%E6%96%99%E9%9B%865.png)
+### 時間
+同樣，Date Time列非常有用，但不是以這種字串形式。首先將其轉換為秒：
 ```
 ```
 # 參考資料
