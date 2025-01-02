@@ -683,7 +683,9 @@ Epoch 13/20
 439/439 ━━━━━━━━━━━━━━━━━━━━ 2s 5ms/step - loss: 0.0085 - mean_absolute_error: 0.0682
 ```
 與baseline模型類似，可以在寬度視窗的批次上呼叫線性模型。使用這種方式，模型會在連續的時間步驟上進行一系列獨立預測。time軸的作用類似另一個batch軸。在每個時間步驟上，預測之間沒有交互作用。
+
 ![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E8%B3%87%E6%96%99%E5%AE%A4%E7%AA%97%E5%8C%969.png)
+
 ```
 print('Input shape:', wide_window.example[0].shape)
 print('Output shape:', baseline(wide_window.example[0]).shape)
@@ -768,11 +770,166 @@ Label column name(s): ['T (degC)']
 conv_window.plot()
 plt.title("Given 3 hours of inputs, predict 1 hour into the future.")
 ```
+![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%92%90%E9%9B%8614.png)
+
+您可以透過新增tf.keras.layers.Flatten作為模型的第一層，在多輸入步驟視窗上訓練dense模型：
 ```
+multi_step_dense = tf.keras.Sequential([
+    # Shape: (time, features) => (time*features)
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dense(units=32, activation='relu'),
+    tf.keras.layers.Dense(units=32, activation='relu'),
+    tf.keras.layers.Dense(units=1),
+    # Add back the time dimension.
+    # Shape: (outputs) => (1, outputs)
+    tf.keras.layers.Reshape([1, -1]),
+])
+```
+```
+print('Input shape:', conv_window.example[0].shape)
+print('Output shape:', multi_step_dense(conv_window.example[0]).shape)
+```
+```
+Input shape: (32, 3, 19)
+Output shape: (32, 1, 1)
+```
+```
+history = compile_and_fit(multi_step_dense, conv_window)
+
+IPython.display.clear_output()
+val_performance['Multi step dense'] = multi_step_dense.evaluate(conv_window.val)
+performance['Multi step dense'] = multi_step_dense.evaluate(conv_window.test, verbose=0) 
+```
+```
+conv_window.plot(multi_step_dense)
+```
+![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%92%90%E9%9B%8615.png)
+
+此方法的主要缺點是，產生的模型只能在具有此形狀的輸入視窗上執行。
 
 ```
+print('Input shape:', wide_window.example[0].shape)
+try:
+  print('Output shape:', multi_step_dense(wide_window.example[0]).shape)
+except Exception as e:
+  print(f'\n{type(e).__name__}:{e}')
 ```
 ```
+Input shape: (32, 24, 19)
+
+ValueError:Exception encountered when calling Sequential.call().
+
+Input 0 of layer "dense_4" is incompatible with the layer: expected axis -1 of input shape to have value 57, but received input with shape (32, 456)
+
+Arguments received by Sequential.call():
+  • inputs=tf.Tensor(shape=(32, 24, 19), dtype=float32)
+  • training=None
+  • mask=None
+```
+下一部分的捲積模型將解決這個問題。
+
+卷積神經網絡
+卷積層( tf.keras.layers.Conv1D) 也需要多個時間步驟作為每個預測的輸入。
+
+下面的模型與multi_step_dense 相同，使用卷積進行了重寫。
+
+請注意以下變化：
+
+tf.keras.layers.Flatten和第一個tf.keras.layers.Dense替換成了tf.keras.layers.Conv1D。
+由於卷積將時間軸保留在其輸出中，不再需要tf.keras.layers.Reshape
+```
+conv_model = tf.keras.Sequential([
+    tf.keras.layers.Conv1D(filters=32,
+                           kernel_size=(CONV_WIDTH,),
+                           activation='relu'),
+    tf.keras.layers.Dense(units=32, activation='relu'),
+    tf.keras.layers.Dense(units=1),
+])
+```
+```
+print("Conv model on `conv_window`")
+print('Input shape:', conv_window.example[0].shape)
+print('Output shape:', conv_model(conv_window.example[0]).shape)
+```
+```
+Conv model on `conv_window`
+Input shape: (32, 3, 19)
+Output shape: (32, 1, 1)
+```
+在一個樣本批次上運行上述模型，以查看模型是否產生了具有預期形狀的輸出：
+```
+print("Conv model on `conv_window`")
+print('Input shape:', conv_window.example[0].shape)
+print('Output shape:', conv_model(conv_window.example[0]).shape)
+```
+```
+Wide window
+Input shape: (32, 24, 19)
+Labels shape: (32, 24, 1)
+Output shape: (32, 22, 1)
+```
+在conv_window上訓練和評估上述模型，它應該提供與multi_step_dense模型類似的性能。
+```
+history = compile_and_fit(conv_model, conv_window)
+
+IPython.display.clear_output()
+val_performance['Conv'] = conv_model.evaluate(conv_window.val)
+performance['Conv'] = conv_model.evaluate(conv_window.test, verbose=0)
+```
+此conv_model和multi_step_dense模型的差異在於，conv_model可以在任意長度的輸入上運行。卷積層應用於輸入的滑動視窗：
+
+![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E8%B3%87%E6%96%99%E5%AE%A4%E7%AA%97%E5%8C%9610.png)
+
+```
+print("Wide window")
+print('Input shape:', wide_window.example[0].shape)
+print('Labels shape:', wide_window.example[1].shape)
+print('Output shape:', conv_model(wide_window.example[0]).shape)
+```
+```
+Wide window
+Input shape: (32, 24, 19)
+Labels shape: (32, 24, 1)
+Output shape: (32, 22, 1)
+```
+請注意，輸出比輸入短。要進行訓練或繪圖，需要標籤和預測具有相同長度。因此，建置WindowGenerator以使用一些額外輸入時間步驟產生寬窗口，從而使標籤和預測長度匹配：
+```
+LABEL_WIDTH = 24
+INPUT_WIDTH = LABEL_WIDTH + (CONV_WIDTH - 1)
+wide_conv_window = WindowGenerator(
+    input_width=INPUT_WIDTH,
+    label_width=LABEL_WIDTH,
+    shift=1,
+    label_columns=['T (degC)'])
+
+wide_conv_window
+```
+```
+Total window size: 27
+Input indices: [ 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
+ 24 25]
+Label indices: [ 3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26]
+Label column name(s): ['T (degC)']
+```
+```
+print("Wide window")
+print('Input shape:', wide_window.example[0].shape)
+print('Labels shape:', wide_window.example[1].shape)
+print('Output shape:', conv_model(wide_window.example[0]).shape)
+```
+```
+Wide window
+Input shape: (32, 24, 19)
+Labels shape: (32, 24, 1)
+Output shape: (32, 22, 1)
+```
+現在，您可以在更寬的視窗上繪製模型的預測。請注意第一個預測之前的3 個輸入時間步驟。這裡的每個預測都基於之前的3 個時間步驟：
+```
+wide_window.plot(conv_model)
+```
+![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%92%90%E9%9B%8617.png)
+
+
 ```
 ```
 ![image]()
