@@ -179,6 +179,45 @@ _ = plt.xlabel('Frequency (log scale)')
 ```
 ![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%B3%87%E6%96%99%E9%9B%868.png)
 
+###拆分數據
+您將使用(70%, 20%, 10%)拆分出訓練集、驗證集和測試集。請注意，在拆分前資料沒有隨機打亂順序。這有兩個原因：
+
+1.確保仍然可以將資料切入連續樣本的視窗。
+2.確保訓練後在收集的數據上對模型進行評估，驗證/測試結果更加真實。
+```
+column_indices = {name: i for i, name in enumerate(df.columns)}
+
+n = len(df)
+train_df = df[0:int(n*0.7)]
+val_df = df[int(n*0.7):int(n*0.9)]
+test_df = df[int(n*0.9):]
+
+num_features = df.shape[1]
+```
+###歸一化數據
+在訓練神經網路之前縮放特徵很重要。歸一化是進行此類縮放的常見方式：減去平均值，然後除以每個特徵的標準差。
+
+平均值和標準偏差應僅使用訓練資料進行計算，從而使模型無法存取驗證集和測試集中的值。
+
+有待商榷的是：模型在訓練時不應存取訓練集中的未來值，以及應該使用移動平均數來進行此類規範化。這不是本教學的重點，驗證集和測試集會確保我們獲得（某種程度上）可靠的指標。因此，為了簡單起見，本教學使用的是簡單平均數。
+```
+train_mean = train_df.mean()
+train_std = train_df.std()
+
+train_df = (train_df - train_mean) / train_std
+val_df = (val_df - train_mean) / train_std
+test_df = (test_df - train_mean) / train_std
+```
+現在來看看這些特徵的分佈。部分特徵的尾部確實很長，但沒有類似-9999風速值的明顯錯誤。
+```
+df_std = (df - train_mean) / train_std
+df_std = df_std.melt(var_name='Column', value_name='Normalized')
+plt.figure(figsize=(12, 6))
+ax = sns.violinplot(x='Column', y='Normalized', data=df_std)
+_ = ax.set_xticklabels(df.keys(), rotation=90)
+```
+<ipython-input-22-4ec9be458a7e>:5: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+  _ = ax.set_xticklabels(df.keys(), rotation=90)
 ```
 ```
 ```
