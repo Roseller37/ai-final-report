@@ -944,6 +944,258 @@ lstm 預熱並進行單一預測
 1.如果為True，層將為每個輸入傳回一個輸出。這對以下情況十分有用：
 ● 堆疊RNN 層。
 ● 同時在多個時間步驟上訓練模型。
+![image]()
+```
+lstm_model = tf.keras.models.Sequential([
+    # Shape [batch, time, features] => [batch, time, lstm_units]
+    tf.keras.layers.LSTM(32, return_sequences=True),
+    # Shape => [batch, time, features]
+    tf.keras.layers.Dense(units=1)
+])
+```
+`return_sequences=True`時，模型一次可以在24 小時的資料上進行訓練。
+
+註：這將對模型的性能給予悲觀看法。在第一個時間步驟中，模型無法存取先前的步驟，因此無法比之前展示的簡單`linear`和`dense`模型表現得更好。
+```
+print('Input shape:', wide_window.example[0].shape)
+print('Output shape:', lstm_model(wide_window.example[0]).shape)
+```
+```
+Input shape: (32, 24, 19)
+Output shape: (32, 24, 1)
+```
+```
+history = compile_and_fit(lstm_model, wide_window)
+
+IPython.display.clear_output()
+val_performance['LSTM'] = lstm_model.evaluate(wide_window.val)
+performance['LSTM'] = lstm_model.evaluate(wide_window.test, verbose=0)
+```
+```
+438/438 [==============================] - 1s 3ms/step - loss: 0.0057 - mean_absolute_error: 0.0522
+```
+```
+wide_window.plot(lstm_model)
+```
+![image]()
+### 效能
+使用此資料集時，通常每個模型的效能都比之前的模型稍好：
+```
+x = np.arange(len(performance))
+width = 0.3
+metric_name = 'mean_absolute_error'
+metric_index = lstm_model.metrics_names.index('mean_absolute_error')
+val_mae = [v[metric_index] for v in val_performance.values()]
+test_mae = [v[metric_index] for v in performance.values()]
+
+plt.ylabel('mean_absolute_error [T (degC), normalized]')
+plt.bar(x - 0.17, val_mae, width, label='Validation')
+plt.bar(x + 0.17, test_mae, width, label='Test')
+plt.xticks(ticks=x, labels=performance.keys(),
+           rotation=45)
+_ = plt.legend()
+```
+![image]()
+```
+for name, value in performance.items():
+  print(f'{name:12s}: {value[1]:0.4f}')
+```
+```
+Baseline    : 0.0852
+Linear      : 0.0663
+Dense       : 0.0602
+Multi step dense: 0.0560
+Conv        : 0.0596
+LSTM        : 0.0530
+```
+### 多重輸出模型
+到目前為止，所有模型都為單一時間步驟預測了單一輸出特徵，`T (degC)`。
+
+只需更改輸出層中的單元數並調整訓練窗口，以將所有特徵納入labels( example_labels) 中，即可將所有上述模型轉換為預測多個特徵：
+```
+single_step_window = WindowGenerator(
+    # `WindowGenerator` returns all features as labels if you 
+    # don't set the `label_columns` argument.
+    input_width=1, label_width=1, shift=1)
+
+wide_window = WindowGenerator(
+    input_width=24, label_width=24, shift=1)
+
+for example_inputs, example_labels in wide_window.train.take(1):
+  print(f'Inputs shape (batch, time, features): {example_inputs.shape}')
+  print(f'Labels shape (batch, time, features): {example_labels.shape}')
+```
+```
+Inputs shape (batch, time, features): (32, 24, 19)
+Labels shape (batch, time, features): (32, 24, 19)
+```
+請注意，上面標籤的`features`軸現在具有與輸入相同的深度，而不是1。
+
+### 基線
+這裡可以使用相同的基準模型( `Baseline`)，但這次重複所有特徵，而不是選擇特定的label_index：
+```
+baseline = Baseline()
+baseline.compile(loss=tf.keras.losses.MeanSquaredError(),
+                 metrics=[tf.keras.metrics.MeanAbsoluteError()])
+```
+```
+val_performance = {}
+performance = {}
+val_performance['Baseline'] = baseline.evaluate(wide_window.val)
+performance['Baseline'] = baseline.evaluate(wide_window.test, verbose=0)
+```
+```
+438/438 [==============================] - 1s 2ms/step - loss: 0.0886 - mean_absolute_error: 0.1589
+```
+### 密集
+```
+dense = tf.keras.Sequential([
+    tf.keras.layers.Dense(units=64, activation='relu'),
+    tf.keras.layers.Dense(units=64, activation='relu'),
+    tf.keras.layers.Dense(units=num_features)
+])
+```
+```
+history = compile_and_fit(dense, single_step_window)
+
+IPython.display.clear_output()
+val_performance['Dense'] = dense.evaluate(single_step_window.val)
+performance['Dense'] = dense.evaluate(single_step_window.test, verbose=0)
+```
+```
+439/439 [==============================] - 1s 3ms/step - loss: 0.0679 - mean_absolute_error: 0.1310
+```
+### RNN
+```
+%%time
+wide_window = WindowGenerator(
+    input_width=24, label_width=24, shift=1)
+
+lstm_model = tf.keras.models.Sequential([
+    # Shape [batch, time, features] => [batch, time, lstm_units]
+    tf.keras.layers.LSTM(32, return_sequences=True),
+    # Shape => [batch, time, features]
+    tf.keras.layers.Dense(units=num_features)
+])
+
+history = compile_and_fit(lstm_model, wide_window)
+
+IPython.display.clear_output()
+val_performance['LSTM'] = lstm_model.evaluate( wide_window.val)
+performance['LSTM'] = lstm_model.evaluate( wide_window.test, verbose=0)
+
+print()
+```
+```
+438/438 [==============================] - 1s 3ms/step - loss: 0.0613 - mean_absolute_error: 0.1195
+
+CPU times: user 5min 54s, sys: 1min 12s, total: 7min 7s
+Wall time: 2min 38s
+```
+#### 進階：殘差連接
+先前的Baseline模型利用了以下事實：序列在時間步驟之間不會劇烈變化。到目前為止，本教程中訓練的每個模型都進行了隨機初始化，然後必須學習輸出相較上一個時間步驟改變較小這一知識。
+
+儘管您可以透過仔細初始化來解決此問題，但將此問題建置到模型結構中則更加簡單。
+
+在時間序列分析中建立的模型，通常會預測下一個時間步驟中的值會如何變化，而不是直接預測下一個值。類似地，深度學習中的[殘差網路](https://arxiv.org/abs/1512.03385)（或ResNet）指的是，每一層都會加入模型的累積結果中的架構。
+
+這就是利用「改變應該較小」這一知識的方式。
+![image]()
+本質上，這將初始化模型以匹配`Baseline`。對於此任務，它可以幫助模型更快收斂，且效能稍好。
+
+該方法可以與本教程中討論的任何模型結合使用。
+
+這裡將它應用於LSTM 模型，請注意`[tf.initializers.zeros](https://tensorflow.google.cn/api_docs/python/tf/keras/initializers/Zeros)`的使用，以確保初始的預測改變很小，並且不會壓制殘差連接。此處的梯度沒有破壞對稱性的問題，因為`zeros`僅用於最後一層。
+```
+class ResidualWrapper(tf.keras.Model):
+  def __init__(self, model):
+    super().__init__()
+    self.model = model
+
+  def call(self, inputs, *args, **kwargs):
+    delta = self.model(inputs, *args, **kwargs)
+
+    # The prediction for each time step is the input
+    # from the previous time step plus the delta
+    # calculated by the model.
+    return inputs + delta
+```
+```
+%%time
+residual_lstm = ResidualWrapper(
+    tf.keras.Sequential([
+    tf.keras.layers.LSTM(32, return_sequences=True),
+    tf.keras.layers.Dense(
+        num_features,
+        # The predicted deltas should start small.
+        # Therefore, initialize the output layer with zeros.
+        kernel_initializer=tf.initializers.zeros())
+]))
+
+history = compile_and_fit(residual_lstm, wide_window)
+
+IPython.display.clear_output()
+val_performance['Residual LSTM'] = residual_lstm.evaluate(wide_window.val)
+performance['Residual LSTM'] = residual_lstm.evaluate(wide_window.test, verbose=0)
+print()
+```
+```
+438/438 [==============================] - 1s 3ms/step - loss: 0.0622 - mean_absolute_error: 0.1180
+
+CPU times: user 1min 59s, sys: 23.3 s, total: 2min 23s
+Wall time: 54.9 s
+```
+#### 效能
+以下是這些多輸出模型的整體表現。
+```
+x = np.arange(len(performance))
+width = 0.3
+
+metric_name = 'mean_absolute_error'
+metric_index = lstm_model.metrics_names.index('mean_absolute_error')
+val_mae = [v[metric_index] for v in val_performance.values()]
+test_mae = [v[metric_index] for v in performance.values()]
+
+plt.bar(x - 0.17, val_mae, width, label='Validation')
+plt.bar(x + 0.17, test_mae, width, label='Test')
+plt.xticks(ticks=x, labels=performance.keys(),
+           rotation=45)
+plt.ylabel('MAE (average over all outputs)')
+_ = plt.legend()
+```
+![image]()
+```
+for name, value in performance.items():
+  print(f'{name:15s}: {value[1]:0.4f}')
+```
+```
+Baseline : 0.1638
+Dense : 0.1320
+LSTM : 0.1209
+Residual LSTM : 0.1193
+```
+以上表現是所有模型輸出的平均值。
+
+### 多步驟模型
+前幾個部分中的單輸出和多輸出模型都對未來1 小時進行單一時間步驟預測。
+
+本部分介紹如何擴展這些模型以進行多時間步驟預測。
+
+在多步驟預測中，模型需要學習預測一系列未來值。因此，與單步模型（僅預測單一未來點）不同，多步驟模型預測未來值的序列。
+
+大致上有兩種預測方法：
+
+單次預測，一次預測整個時間序列。
+自迴歸預測，模型僅進行單步預測並將輸出作為輸入進行回饋。
+在本部分中，所有模型都將預測所有輸出時間步驟中的所有特徵。
+
+對於多步驟模型而言，訓練資料仍由每小時樣本組成。但是，在這裡，模型將在給定過去24 小時的情況下學習預測未來24 小時。
+
+下面是一個`Window`對象，該對象從資料集產生以下切片：
+```
+```
+```
+```
 ```
 ```
 ![image]()
