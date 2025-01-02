@@ -222,6 +222,8 @@ _ = ax.set_xticklabels(df.keys(), rotation=90)
 ```
 
 ![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%B3%87%E6%96%99%E9%9B%869.png)
+
+
 ##資料視窗化
 本教程中的模型將基於來自資料連續樣本的視窗進行一組預測。
 
