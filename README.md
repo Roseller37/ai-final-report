@@ -153,6 +153,9 @@ plt.plot(np.array(df['Day cos'])[:25])
 plt.xlabel('Time [h]')
 plt.title('Time of day signal')
 ```
+```
+Text(0.5, 1.0, 'Time of day signal')
+```
 ![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%B3%87%E6%96%99%E9%9B%867.png)
 ```
 ```
