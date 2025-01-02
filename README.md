@@ -216,10 +216,32 @@ plt.figure(figsize=(12, 6))
 ax = sns.violinplot(x='Column', y='Normalized', data=df_std)
 _ = ax.set_xticklabels(df.keys(), rotation=90)
 ```
+```
 <ipython-input-22-4ec9be458a7e>:5: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
   _ = ax.set_xticklabels(df.keys(), rotation=90)
 ```
+
+![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%B3%87%E6%96%99%E9%9B%869.png)
+##資料視窗化
+本教程中的模型將基於來自資料連續樣本的視窗進行一組預測。
+
+輸入視窗的主要特徵包括：
+
+輸入和標籤視窗的寬度（時間步驟數）。
+它們之間的時間偏移量。
+用作輸入、標籤或兩者的特徵。
+本教學建立了各種模型（包括線性、DNN、CNN 和RNN 模型），並將它們用於以下兩種情況：
+
+單輸出和多重輸出預測。
+單時間步驟和多時間步驟預測。
+本部分重點在於實現資料視窗化，以便將其重複使用到上述所有模型。
+
+根據任務和模型類型，您可能需要產生各種資料視窗。下面是一些範例：
+
+例如，要在給定24 小時歷史記錄的情況下對未來24 小時作出一次預測，可以定義如下視窗：
 ```
+```
+
 ```
 ```
 # 參考資料
