@@ -157,8 +157,31 @@ plt.title('Time of day signal')
 Text(0.5, 1.0, 'Time of day signal')
 ```
 ![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%B3%87%E6%96%99%E9%9B%867.png)
-```
-```
 
+這使模型能夠存取最重要的頻率特徵。在這種情況下，您提前知道了哪些頻率很重要。
+
+如果您沒有該資訊，則可以透過使用快速傅立葉變換提取特徵來確定哪些頻率重要。要檢驗假設，以下是溫度隨時間變化的tf.signal.rfft。請注意1/year和1/day附近頻率的明顯峰值：
+```
+fft = tf.signal.rfft(df['T (degC)'])
+f_per_dataset = np.arange(0, len(fft))
+
+n_samples_h = len(df['T (degC)'])
+hours_per_year = 24*365.2524
+years_per_dataset = n_samples_h/(hours_per_year)
+
+f_per_year = f_per_dataset/years_per_dataset
+plt.step(f_per_year, np.abs(fft))
+plt.xscale('log')
+plt.ylim(0, 400000)
+plt.xlim([0.1, max(plt.xlim())])
+plt.xticks([1, 365.2524], labels=['1/Year', '1/day'])
+_ = plt.xlabel('Frequency (log scale)')
+```
+![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%B3%87%E6%96%99%E9%9B%868.png)
+
+```
+```
+```
+```
 # 參考資料
 [時間序列預測]([https://www.cc.ntu.edu.tw/chinese/epaper/0052/20200320_5207.html](https://tensorflow.google.cn/tutorials/structured_data/time_series?hl=zh_cn))
