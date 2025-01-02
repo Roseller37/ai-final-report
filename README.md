@@ -563,25 +563,8 @@ performance = {}
 val_performance['Baseline'] = baseline.evaluate(single_step_window.val)
 performance['Baseline'] = baseline.evaluate(single_step_window.test, verbose=0)
 ```
-
 ```
-```
-```
-```
-上面的程式碼列印了一些效能指標，但這些指標並沒有使您對模型的運作有所了解。
-
-WindowGenerator有一種繪製方法，但只有一個樣本，繪圖不是很有趣。
-
-因此，創建一個更寬的WindowGenerator來一次產生包含24 小時連續輸入和標籤的視窗。新的wide_window變數不會改變模型的運算方式。模型仍會根據單一輸入時間步驟對未來1 小時進行預測。這裡time軸的作用類似batch軸：每個預測都是獨立進行的，時間步驟之間沒有交互作用：
-```
-wide_window = WindowGenerator(
-    input_width=24, label_width=24, shift=1,
-    label_columns=['T (degC)'])
-
-wide_window
-```
-```
-439/439 [━━━━━━━━━━━━━━━━━━━━] 2s 4ms/step - loss: 0.0132 - mean_absolute_error: 0.0795
+439/439 ━━━━━━━━━━━━━━━━━━━━ 1s 3ms/step - loss: 0.0129 - mean_absolute_error: 0.0789
 ```
 上面的程式碼列印了一些效能指標，但這些指標並沒有使您對模型的運作有所了解。
 
@@ -608,10 +591,192 @@ Label column name(s): ['T (degC)']
 print('Input shape:', wide_window.example[0].shape)
 print('Output shape:', baseline(wide_window.example[0]).shape)
 ```
+```
+Input shape: (32, 24, 19)
+Output shape: (32, 24, 1)
+```
+透過繪製基線模型的預測值，可以注意到只是標籤向右移動了1 小時：
+```
+wide_window.plot(baseline)
+```
+![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%92%90%E9%9B%8616.png)
 
+在上面三個樣本的繪圖中，單步驟模型運行了24 小時。這需要一些解釋：
+
+● 藍色的Inputs行顯示每個時間步驟的輸入溫度。模型會接收所有特徵，而該繪圖僅顯示溫度。
+
+● 綠色的Labels點顯示目標預測值。這些點在預測時間，而不是輸入時間顯示。這就是為什麼標籤範圍相對於輸入移動了1 步。
+
+● 橘色的Predictions叉是模型針對每個輸出時間步驟的預測。如果模型能夠進行完美預測，則預測值將直接落在Labels上。
+
+### 線性模型
+可以應用於此任務的最簡單的可訓練模型是在輸入和輸出之間插入線性轉換。在這種情況下，時間步驟的輸出僅取決於該步驟：
+
+![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E8%B3%87%E6%96%99%E5%AE%A4%E7%AA%97%E5%8C%966.png)
+
+沒有設定activation的tf.keras.layers.Dense層是線性模型。圖層僅會將資料的最後一個軸從(batch, time, inputs)轉換為(batch, time, units)；它會單獨應用於batch和time軸的每個條目。
+```
+linear = tf.keras.Sequential([
+    tf.keras.layers.Dense(units=1)
+])
+```
+```
+print('Input shape:', single_step_window.example[0].shape)
+print('Output shape:', linear(single_step_window.example[0]).shape)
+```
+```
+Input shape: (32, 1, 19)
+Output shape: (32, 1, 1)
+```
+本教學訓練許多模型，因此將訓練過程打包到一個函數中：
+```
+MAX_EPOCHS = 20
+
+def compile_and_fit(model, window, patience=2):
+  early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
+                                                    patience=patience,
+                                                    mode='min')
+
+  model.compile(loss=tf.keras.losses.MeanSquaredError(),
+                optimizer=tf.keras.optimizers.Adam(),
+                metrics=[tf.keras.metrics.MeanAbsoluteError()])
+
+  history = model.fit(window.train, epochs=MAX_EPOCHS,
+                      validation_data=window.val,
+                      callbacks=[early_stopping])
+  return history
+```
+訓練模型並評估其表現：
+```
+history = compile_and_fit(linear, single_step_window)
+
+val_performance['Linear'] = linear.evaluate(single_step_window.val)
+performance['Linear'] = linear.evaluate(single_step_window.test, verbose=0)
+```
+```
+Epoch 1/20
+1534/1534 ━━━━━━━━━━━━━━━━━━━━ 7s 4ms/step - loss: 0.6573 - mean_absolute_error: 0.5335 - val_loss: 0.0140 - val_mean_absolute_error: 0.0884
+Epoch 2/20
+1534/1534 ━━━━━━━━━━━━━━━━━━━━ 10s 4ms/step - loss: 0.0133 - mean_absolute_error: 0.0863 - val_loss: 0.0117 - val_mean_absolute_error: 0.0813
+Epoch 3/20
+1534/1534 ━━━━━━━━━━━━━━━━━━━━ 12s 5ms/step - loss: 0.0114 - mean_absolute_error: 0.0797 - val_loss: 0.0100 - val_mean_absolute_error: 0.0744
+Epoch 4/20
+1534/1534 ━━━━━━━━━━━━━━━━━━━━ 13s 6ms/step - loss: 0.0100 - mean_absolute_error: 0.0739 - val_loss: 0.0091 - val_mean_absolute_error: 0.0708
+Epoch 5/20
+1534/1534 ━━━━━━━━━━━━━━━━━━━━ 8s 5ms/step - loss: 0.0093 - mean_absolute_error: 0.0712 - val_loss: 0.0089 - val_mean_absolute_error: 0.0702
+Epoch 6/20
+1534/1534 ━━━━━━━━━━━━━━━━━━━━ 6s 4ms/step - loss: 0.0091 - mean_absolute_error: 0.0702 - val_loss: 0.0088 - val_mean_absolute_error: 0.0689
+Epoch 7/20
+1534/1534 ━━━━━━━━━━━━━━━━━━━━ 13s 5ms/step - loss: 0.0090 - mean_absolute_error: 0.0697 - val_loss: 0.0088 - val_mean_absolute_error: 0.0692
+Epoch 8/20
+1534/1534 ━━━━━━━━━━━━━━━━━━━━ 7s 5ms/step - loss: 0.0090 - mean_absolute_error: 0.0698 - val_loss: 0.0087 - val_mean_absolute_error: 0.0690
+Epoch 9/20
+1534/1534 ━━━━━━━━━━━━━━━━━━━━ 9s 4ms/step - loss: 0.0090 - mean_absolute_error: 0.0695 - val_loss: 0.0087 - val_mean_absolute_error: 0.0687
+Epoch 10/20
+1534/1534 ━━━━━━━━━━━━━━━━━━━━ 12s 5ms/step - loss: 0.0090 - mean_absolute_error: 0.0697 - val_loss: 0.0087 - val_mean_absolute_error: 0.0685
+Epoch 11/20
+1534/1534 ━━━━━━━━━━━━━━━━━━━━ 12s 6ms/step - loss: 0.0090 - mean_absolute_error: 0.0696 - val_loss: 0.0086 - val_mean_absolute_error: 0.0683
+Epoch 12/20
+1534/1534 ━━━━━━━━━━━━━━━━━━━━ 8s 5ms/step - loss: 0.0090 - mean_absolute_error: 0.0697 - val_loss: 0.0087 - val_mean_absolute_error: 0.0683
+Epoch 13/20
+1534/1534 ━━━━━━━━━━━━━━━━━━━━ 6s 4ms/step - loss: 0.0090 - mean_absolute_error: 0.0698 - val_loss: 0.0087 - val_mean_absolute_error: 0.0687
+439/439 ━━━━━━━━━━━━━━━━━━━━ 2s 5ms/step - loss: 0.0085 - mean_absolute_error: 0.0682
+```
+與baseline模型類似，可以在寬度視窗的批次上呼叫線性模型。使用這種方式，模型會在連續的時間步驟上進行一系列獨立預測。time軸的作用類似另一個batch軸。在每個時間步驟上，預測之間沒有交互作用。
+![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E8%B3%87%E6%96%99%E5%AE%A4%E7%AA%97%E5%8C%969.png)
+```
+print('Input shape:', wide_window.example[0].shape)
+print('Output shape:', baseline(wide_window.example[0]).shape)
+```
+Input shape: (32, 24, 19)
+Output shape: (32, 24, 1)
+```
+下面是wide_widow上它的樣本預測圖。請注意，在許多情況下，預測值顯然比僅返回輸入溫度更好，但在某些情況下則會更差：****
+```
+```
+wide_window.plot(linear)
+```
+![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%92%90%E9%9B%8612.png)
+
+線性模型的優點之一是它們相對易於解釋。您可以拉取層的權重，並呈現分配給每個輸入的權重：
+
+![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%92%90%E9%9B%8613.png)
+
+```
+plt.bar(x = range(len(train_df.columns)),
+        height=linear.layers[0].kernel[:,0].numpy())
+axis = plt.gca()
+axis.set_xticks(range(len(train_df.columns)))
+_ = axis.set_xticklabels(train_df.columns, rotation=90)
+```
+![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%92%90%E9%9B%8613.png)
+
+有時模型甚至不會將大多數權重放在輸入T (degC)上。這是隨機初始化的風險之一。
+
+### 密集
+在應用實際運算多個時間步驟的模型之前，值得先研究一下更深、更強大的單輸入步驟模型的表現。
+
+下面是一個與linear模型類似的模型，只不過它在輸入和輸出之間堆疊了幾個Dense層：
+```
+dense = tf.keras.Sequential([
+    tf.keras.layers.Dense(units=64, activation='relu'),
+    tf.keras.layers.Dense(units=64, activation='relu'),
+    tf.keras.layers.Dense(units=1)
+])
+
+history = compile_and_fit(dense, single_step_window)
+
+val_performance['Dense'] = dense.evaluate(single_step_window.val)
+performance['Dense'] = dense.evaluate(single_step_window.test, verbose=0)
+```
+```
+Epoch 1/20
+1534/1534 ━━━━━━━━━━━━━━━━━━━━ 9s 5ms/step - loss: 0.0420 - mean_absolute_error: 0.1111 - val_loss: 0.0081 - val_mean_absolute_error: 0.0659
+Epoch 2/20
+1534/1534 ━━━━━━━━━━━━━━━━━━━━ 9s 4ms/step - loss: 0.0079 - mean_absolute_error: 0.0642 - val_loss: 0.0079 - val_mean_absolute_error: 0.0652
+Epoch 3/20
+1534/1534 ━━━━━━━━━━━━━━━━━━━━ 9s 6ms/step - loss: 0.0075 - mean_absolute_error: 0.0624 - val_loss: 0.0082 - val_mean_absolute_error: 0.0661
+Epoch 4/20
+1534/1534 ━━━━━━━━━━━━━━━━━━━━ 8s 5ms/step - loss: 0.0073 - mean_absolute_error: 0.0612 - val_loss: 0.0071 - val_mean_absolute_error: 0.0610
+```
+### 多步驟密集
+單時間步驟模型沒有其輸入的目前值的上下文。它看不到輸入特徵隨時間變化的情況。要解決此問題，模型在進行預測時需要存取多個時間步驟：
+
+![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E8%B3%87%E6%96%99%E5%AE%A4%E7%AA%97%E5%8C%9610.png)
+
+baseline、linear和dense模型會單獨處理每個時間步驟。在這裡，模型將接受多個時間步驟作為輸入，以產生單一輸出。
+
+建立一個WindowGenerator，它將產生3 小時輸入和1 小時標籤的批次：
+
+請注意，Window的shift參數與兩個視窗的末端相關。
+
+```
+CONV_WIDTH = 3
+conv_window = WindowGenerator(
+    input_width=CONV_WIDTH,
+    label_width=1,
+    shift=1,
+    label_columns=['T (degC)'])
+
+conv_window
+```
+```
+Total window size: 4
+Input indices: [0 1 2]
+Label indices: [3]
+Label column name(s): ['T (degC)']
+```
+```
+conv_window.plot()
+plt.title("Given 3 hours of inputs, predict 1 hour into the future.")
+```
+```
+
+```
+```
+```
 ```
 ```
 ![image]()
-
 # 參考資料
 [時間序列預測]([https://www.cc.ntu.edu.tw/chinese/epaper/0052/20200320_5207.html](https://tensorflow.google.cn/tutorials/structured_data/time_series?hl=zh_cn))
