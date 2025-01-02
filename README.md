@@ -828,7 +828,7 @@ Arguments received by Sequential.call():
 ```
 下一部分的捲積模型將解決這個問題。
 
-卷積神經網絡
+### 卷積神經網絡
 卷積層( tf.keras.layers.Conv1D) 也需要多個時間步驟作為每個預測的輸入。
 
 下面的模型與multi_step_dense 相同，使用卷積進行了重寫。
@@ -929,7 +929,21 @@ wide_window.plot(conv_model)
 ```
 ![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%92%90%E9%9B%8617.png)
 
+### 循環神經網絡
+循環神經網路(RNN) 是一種非常適合時間序列資料的神經網路。 RNN 逐步處理時間序列，從時間步驟到時間步驟維護內部狀態。
 
+您可以在使用RNN 的文本生成教程和使用Keras 的遞歸神經網路(RNN)指南中了解詳情。
+
+在本教學中，您將使用稱為「長短期記憶網路」( tf.keras.layers.LSTM) 的RNN 層。
+
+對所有Keras RNN 層（例如tf.keras.layers.LSTM）都很重要的一個建構函數參數是return_sequences。此設定可以透過以下兩種方式配置層：
+
+1.如果為False（預設值），則圖層僅傳回最終時間步驟的輸出，使模型有時間在進行單一預測之前對其內部狀態進行預熱：
+lstm 預熱並進行單一預測
+
+1.如果為True，層將為每個輸入傳回一個輸出。這對以下情況十分有用：
+● 堆疊RNN 層。
+● 同時在多個時間步驟上訓練模型。
 ```
 ```
 ![image]()
