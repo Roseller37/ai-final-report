@@ -878,7 +878,7 @@ performance['Conv'] = conv_model.evaluate(conv_window.test, verbose=0)
 ```
 此conv_model和multi_step_dense模型的差異在於，conv_model可以在任意長度的輸入上運行。卷積層應用於輸入的滑動視窗：
 
-![image]([https://github.com/Roseller37/ai-final-report/blob/main/image/%E8%B3%87%E6%96%99%E5%AE%A4%E7%AA%97%E5%8C%9610.png](https://github.com/Roseller37/ai-final-report/blob/main/image/%E6%9B%B4%E6%96%B01.png))
+![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E6%9B%B4%E6%96%B01.png)
 
 ```
 print("Wide window")
@@ -927,7 +927,7 @@ Output shape: (32, 22, 1)
 ```
 wide_window.plot(conv_model)
 ```
-![image]([https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%92%90%E9%9B%8617.png](https://github.com/Roseller37/ai-final-report/blob/main/image/%E6%9B%B4%E6%96%B02.png))
+![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E6%9B%B4%E6%96%B02.png)
 
 ### 循環神經網絡
 循環神經網路(RNN) 是一種非常適合時間序列資料的神經網路。 RNN 逐步處理時間序列，從時間步驟到時間步驟維護內部狀態。
