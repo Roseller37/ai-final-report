@@ -1544,4 +1544,4 @@ AR LSTM : 0.2933
 還要記住，您可以在TensorFlow 中實作任何[經典時間序列模型](https://otexts.com/fpp2/index.html)，本教學僅重點介紹了TensorFlow 的內建功能。
 
 # 參考資料
-[時間序列預測](https://tensorflow.google.cn/tutorials/structured_data/time_series?hl=zh_cn#%E5%8D%B7%E7%A7%AF%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C)
+[時間序列預測](https://tensorflow.google.cn/tutorials/structured_data/time_series?hl=zh_cn)
