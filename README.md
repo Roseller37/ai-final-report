@@ -1542,6 +1542,76 @@ AR LSTM : 0.2933
  ● Udacity 的Intro to TensorFlow for deep learning第8 課，包括練習筆記本。
  
 還要記住，您可以在TensorFlow 中實作任何經典時間序列模型，本教學僅重點介紹了TensorFlow 的內建功能。
+```
+OUT_STEPS = 24
+multi_window = WindowGenerator(input_width=24,
+                               label_width=OUT_STEPS,
+                               shift=OUT_STEPS)
 
+multi_window.plot()
+multi_window
+```
+#### 基線
+此任務的簡單基準是針對所需數量的輸出時間步驟重複上一個輸入時間步驟：
+![image]()
+```
+class MultiStepLastBaseline(tf.keras.Model):
+  def call(self, inputs):
+    return tf.tile(inputs[:, -1:, :], [1, OUT_STEPS, 1])
+
+last_baseline = MultiStepLastBaseline()
+last_baseline.compile(loss=tf.keras.losses.MeanSquaredError(),
+                      metrics=[tf.keras.metrics.MeanAbsoluteError()])
+
+multi_val_performance = {}
+multi_performance = {}
+
+multi_val_performance['Last'] = last_baseline.evaluate(multi_window.val)
+multi_performance['Last'] = last_baseline.evaluate(multi_window.test, verbose=0)
+multi_window.plot(last_baseline)
+```
+```
+437/437 [==============================] - 1s 2ms/step - loss: 0.6285 - mean_absolute_error: 0.5007
+```
+![image]()
+由於此任務是在給定過去24 小時的情況下預測未來24 小時，另一種簡單的方式是重複前一天，假設明天是類似的：
+![image]()
+```
+class RepeatBaseline(tf.keras.Model):
+  def call(self, inputs):
+    return inputs
+
+repeat_baseline = RepeatBaseline()
+repeat_baseline.compile(loss=tf.keras.losses.MeanSquaredError(),
+                        metrics=[tf.keras.metrics.MeanAbsoluteError()])
+
+multi_val_performance['Repeat'] = repeat_baseline.evaluate(multi_window.val)
+multi_performance['Repeat'] = repeat_baseline.evaluate(multi_window.test, verbose=0)
+multi_window.plot(repeat_baseline)
+```
+```
+437/437 [==============================] - 1s 2ms/step - loss: 0.4270 - mean_absolute_error: 0.3959
+```
+![image]()
+### 單次模型
+解決此問題的一種高級方法是使用「單次」模型，該模型可以在單一步驟中對整個序列進行預測。
+
+這可以使用OUT_STEPS*features輸出單元作為tf.keras.layers.Dense高效實現。模型只需要將輸出調整為所需的(OUTPUT_STEPS, features)。
+
+#### 線性
+基於最後輸入時間步驟的簡單線性模型優於任何基線，但能力不足。此模型需要根據線性投影的單一輸入時間步驟來預測OUTPUT_STEPS個時間步驟。它只能捕捉行為的低維度切片，可能主要基於一天中的時間和一年中的時間。
+![image]()
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
 # 參考資料
 [時間序列預測]([https://www.cc.ntu.edu.tw/chinese/epaper/0052/20200320_5207.html](https://tensorflow.google.cn/tutorials/structured_data/time_series?hl=zh_cn))
