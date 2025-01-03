@@ -1536,8 +1536,11 @@ AR LSTM : 0.2933
 要了解更多信息，請參閱：
 
  ● Hands-on Machine Learning with Scikit-Learn, Keras, and TensorFlow（第2 版）第15 章。
+ 
  ● Python 深度學習第6 章。
+ 
  ● Udacity 的Intro to TensorFlow for deep learning第8 課，包括練習筆記本。
+ 
 還要記住，您可以在TensorFlow 中實作任何經典時間序列模型，本教學僅重點介紹了TensorFlow 的內建功能。
 
 # 參考資料
