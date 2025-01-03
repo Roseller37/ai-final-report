@@ -1858,9 +1858,9 @@ AR LSTM : 0.2933
 要了解更多信息，請參閱：
 
 [Hands-on Machine Learning with Scikit-Learn, Keras, and TensorFlow](https://www.oreilly.com/library/view/hands-on-machine-learning/9781492032632/)（第2 版）第15 章。
-[Python 深度學習](https://www.manning.com/books/deep-learning-with-python)第6 章。
-[Udacity 的Intro to TensorFlow for deep learning](https://www.udacity.com/course/intro-to-tensorflow-for-deep-learning--ud187)第8 課，包括[練習筆記本](https://github.com/tensorflow/examples/tree/master/courses/udacity_intro_to_tensorflow_for_deep_learning)。
-還要記住，您可以在TensorFlow 中實作任何[經典時間序列模型](https://otexts.com/fpp2/index.html)，本教學僅重點介紹了TensorFlow 的內建功能。
+[Python 深度學習](https://www.manning.com/books/deep-learning-with-python)第6 章。<br>
+[Udacity 的Intro to TensorFlow for deep learning](https://www.udacity.com/course/intro-to-tensorflow-for-deep-learning--ud187)第8 課，包括[練習筆記本](https://github.com/tensorflow/examples/tree/master/courses/udacity_intro_to_tensorflow_for_deep_learning)。<br>
+還要記住，您可以在TensorFlow 中實作任何[經典時間序列模型](https://otexts.com/fpp2/index.html)，本教學僅重點介紹了TensorFlow 的內建功能。<br>
 
 # 參考資料
 [時間序列預測]([https://www.cc.ntu.edu.tw/chinese/epaper/0052/20200320_5207.html](https://tensorflow.google.cn/tutorials/structured_data/time_series?hl=zh_cn))
