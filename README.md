@@ -878,7 +878,7 @@ performance['Conv'] = conv_model.evaluate(conv_window.test, verbose=0)
 ```
 此conv_model和multi_step_dense模型的差異在於，conv_model可以在任意長度的輸入上運行。卷積層應用於輸入的滑動視窗：
 
-![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E8%B3%87%E6%96%99%E5%AE%A4%E7%AA%97%E5%8C%9610.png)
+![image]([https://github.com/Roseller37/ai-final-report/blob/main/image/%E8%B3%87%E6%96%99%E5%AE%A4%E7%AA%97%E5%8C%9610.png](https://github.com/Roseller37/ai-final-report/blob/main/image/%E6%9B%B4%E6%96%B01.png))
 
 ```
 print("Wide window")
@@ -927,7 +927,7 @@ Output shape: (32, 22, 1)
 ```
 wide_window.plot(conv_model)
 ```
-![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%92%90%E9%9B%8617.png)
+![image]([https://github.com/Roseller37/ai-final-report/blob/main/image/%E5%A4%A9%E6%B0%A3%E8%92%90%E9%9B%8617.png](https://github.com/Roseller37/ai-final-report/blob/main/image/%E6%9B%B4%E6%96%B02.png))
 
 ### 循環神經網絡
 循環神經網路(RNN) 是一種非常適合時間序列資料的神經網路。 RNN 逐步處理時間序列，從時間步驟到時間步驟維護內部狀態。
@@ -944,7 +944,7 @@ lstm 預熱並進行單一預測
 1.如果為True，層將為每個輸入傳回一個輸出。這對以下情況十分有用：
 ● 堆疊RNN 層。
 ● 同時在多個時間步驟上訓練模型。
-![image]()
+![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E6%9B%B4%E6%96%B03.png)
 ```
 lstm_model = tf.keras.models.Sequential([
     # Shape [batch, time, features] => [batch, time, lstm_units]
@@ -977,7 +977,7 @@ performance['LSTM'] = lstm_model.evaluate(wide_window.test, verbose=0)
 ```
 wide_window.plot(lstm_model)
 ```
-![image]()
+![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E6%9B%B4%E6%96%B04.png)
 ### 效能
 使用此資料集時，通常每個模型的效能都比之前的模型稍好：
 ```
@@ -995,7 +995,7 @@ plt.xticks(ticks=x, labels=performance.keys(),
            rotation=45)
 _ = plt.legend()
 ```
-![image]()
+![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E6%9B%B4%E6%96%B05.png)
 ```
 for name, value in performance.items():
   print(f'{name:12s}: {value[1]:0.4f}')
@@ -1100,7 +1100,7 @@ Wall time: 2min 38s
 在時間序列分析中建立的模型，通常會預測下一個時間步驟中的值會如何變化，而不是直接預測下一個值。類似地，深度學習中的[殘差網路](https://arxiv.org/abs/1512.03385)（或ResNet）指的是，每一層都會加入模型的累積結果中的架構。
 
 這就是利用「改變應該較小」這一知識的方式。
-![image]()
+![image](https://github.com/Roseller37/ai-final-report/blob/main/image/%E6%9B%B4%E6%96%B06.png)
 本質上，這將初始化模型以匹配`Baseline`。對於此任務，它可以幫助模型更快收斂，且效能稍好。
 
 該方法可以與本教程中討論的任何模型結合使用。
